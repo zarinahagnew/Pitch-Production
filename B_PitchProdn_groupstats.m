@@ -10,6 +10,7 @@
 clear all
 close all
 set_params;
+fs_spec=345;
 
 cerebellar_data_rootdir = '/Users/zagnew/Cereb_data/data/';
 load /Users/zagnew/Dropbox/cerebellum_expr_devel/Zed/meanpitches/subj_MP_allsubs
@@ -151,15 +152,15 @@ for subj=1:npatients
     
     %% calc mean pitch in cents for each sub
     for d=1:15
-        temp_a(d,:)=goodpitchdata_cents(1).window{d};
+        temp_a1(d,:)=goodpitchdata_cents(1).window{d};
     end
-    goodpitchdata_cents(1).meanpitch=nanmean(temp_a);
+    goodpitchdata_cents(1).meanpitch=nanmean(temp_a1);
     goodpitchdata_cents_alldata(subj)=goodpitchdata_cents;
     
     %% calculate mean spectrum
     for d=1:15
         nfreqs=length(goodpitchdata_cents(1).window{d})/2+1;
-        temp1(d,:)=my_spectrum(goodpitchdata_cents(1).window{d},fs,nfreqs);
+        temp1(d,:)=my_spectrum(goodpitchdata_cents(1).window{d},fs_spec,nfreqs);
         %         subplot(5,3,d)
         %         plot(temp1(d,:))
         %         axis([0 10 0 1])
@@ -217,8 +218,10 @@ for moo=1:16
         title(sprintf('each patient'));
         hold all
         axis([0 900 -300 300])
+        goodplot
     end
 end
+
 
 saveas(fig1, '/Users/zagnew/Cereb_data/data/GroupData/pitchprodn/GROUP_pitchproduction_allpatients.jpg')
 
@@ -270,23 +273,26 @@ lowerlimit_HCs=HCgroupmean-HC_sem;
 
 fig4=figure
 subplot(2,1,1)
-plot(patgroupmean, 'm','LineWidth',1.8);
+title('patients group mean pitch production')
+plot(patgroupmean, 'm','LineWidth',1.2);
 hold all
 plot(upperlimit_pats, 'k','LineWidth',0.8);
 plot(lowerlimit_pats, 'k','LineWidth',0.8);
-axis([0 900 -60 60])
+axis([0 900 -20 20])
+
 subplot(2,1,2)
-plot(HCgroupmean, 'm','LineWidth',1.8);
+title('HCs group mean pitch production')
+plot(HCgroupmean, 'm','LineWidth',1.2);
 hold all
 plot(upperlimit_HCs, 'k','LineWidth',0.8);
 plot(lowerlimit_HCs, 'k','LineWidth',0.8);
-axis([0 900 -60 60])
+axis([0 900 -20 20])
 
 
 
 %% do a ttest at each frame between patients and HC spectrum
         for d=1:15
-            for iframe=1:436
+            for iframe=1:length(meanspec)
             ttest_spec(:, iframe)=ttest2(meanspec(1:16,iframe), meanspec(17:end,iframe));            
             end
         end
@@ -303,8 +309,8 @@ for moo=1:16
     plot(pat_meanspec(moo,:), 'k')
     hold on
     plot(mean_pat_meanspec, 'y','LineWidth',1.3);
-    plot(ttest_spec(1:6),'r','LineWidth',1.3);
-    axis([0 100 0 2])
+    plot(ttest_spec(1:7),'r','LineWidth',1.3);
+    axis([0 100 0 50])
     ylabel('Pitch (cents)')
     xlabel('Hz')    
     title(sprintf('Patients'));
@@ -317,8 +323,8 @@ for moo=1:16
     plot(pat_meanspec(moo,:), 'k')
     hold on
     plot(mean_pat_meanspec, 'y','LineWidth',1.3);
-    plot(ttest_spec(1:6),'r','LineWidth',1.3);
-    axis([0 10 0 2])
+    plot(ttest_spec(1:7),'r','LineWidth',1.3);
+    axis([0 15 0 50])
     ylabel('Pitch (cents)')
     xlabel('Hz')    
     title(sprintf('Patients'));
@@ -330,11 +336,10 @@ for moo=1:10
     plot(HC_meanspec(moo,:), 'k')
     hold on
     plot(mean_HC_meanspec, 'm','LineWidth',1.3);
-    axis([0 100 0 2])
+    axis([0 100 0 50])
     ylabel('Pitch (cents)')
     xlabel('Hz')
     title(sprintf('HCs'));
-    
 end
 
 subplot(2,2,4)
@@ -342,7 +347,7 @@ for moo=1:10
     plot(HC_meanspec(moo,:), 'k')
     hold on
     plot(mean_HC_meanspec, 'm','LineWidth',1.3);
-    axis([0 10 0 2])
+    axis([0 15 0 50])
     ylabel('Pitch (cents)')
     xlabel('Hz')    
     title(sprintf('HCs'));
@@ -353,5 +358,118 @@ STATS.meanspec_pats_HC=ttest2(mean_pat_meanspec, mean_HC_meanspec)
 
 saveas(fig3, '/Users/zagnew/Cereb_data/data/GroupData/pitchprodn/GROUP_pitchproduction_spec.jpg')
 
+
+
+%% make final figures
+% plot(test, 'Color',[name of coulour], 'LineWidth',1.3);
+% patient_colour=[.49 1 .63];
+% HC_colour=k;
+ 
+fig1a_final=figure
+annotation('textbox', [0 0.9 1 0.1], ...
+    'String', 'All production trials - patients', ...
+    'EdgeColor', 'none', ...
+    'HorizontalAlignment', 'center')
+
+for moo=1:16
+    for d= 1:15
+        subplot(4,4,moo)
+        cabbage=plot(goodpitchdata_cents_alldata(moo).meanpitch);
+        ylabel('Pitch (cents)')
+        %title(sprintf('each patient'));
+        hold all
+        axis([0 900 -300 300])
+        %goodplot
+        set(cabbage,'LineWidth',2);
+        set(cabbage,'Color',[patient_colour]);        
+    end
+end
+
+fig1b_final=figure
+annotation('textbox', [0 0.9 1 0.1], ...
+    'String', 'All production trials - HCs', ...
+    'EdgeColor', 'none', ...
+    'HorizontalAlignment', 'center')
+
+for moo=1:10
+    for d= 1:15
+        subplot(4,4,moo)
+        cabbage2=plot(goodpitchdata_cents_alldata(moo+16).meanpitch, 'Color',[patient_colour], 'LineWidth',1.3);
+        ylabel('Pitch (cents)')        
+        %title(sprintf('each patient'));
+        hold all
+        axis([0 900 -300 300])        
+        set(cabbage2,'LineWidth',2);
+        set(cabbage2,'Color',[HC_colour]);
+    end
+end
+
+
+significant_frames=find(ttest_spec)
+fig1c_final=figure
+annotation('textbox', [0 0.9 1 0.1], ...
+    'String', 'All production trials - HCs', ...
+    'EdgeColor', 'none', ...
+    'HorizontalAlignment', 'center')
+
+subplot(2,1,1)
+axis([0 150 0 30])
+patch([1 7 7  1], [1 1 25 25], [0.3000    0.3000    0.8000],'EdgeColor', 'none');
+patch([13.5 14.5 14.5 13.5], [1 1 25 25], [0.3000    0.3000    0.8000],'EdgeColor', 'none');
+patch([18.5 19.5 19.5 18.5], [1 1 25 25], [0.3000    0.3000    0.8000],'EdgeColor', 'none');
+patch([24.5 25.5 25.5 24.5], [1 1 25 25], [0.3000    0.3000    0.8000],'EdgeColor', 'none');
+patch([28.5 29.5 29.5 28.5], [1 1 25 25], [0.3000    0.3000    0.8000],'EdgeColor', 'none');
+hold on
+plot(mean_pat_meanspec, 'Color',[patient_colour],'LineWidth',1.5);
+plot(mean_HC_meanspec, 'Color',[HC_colour],'LineWidth',1.5);
+grid on
+%grid on, 'GridColor', [0.3000    0.3000    0.8000];
+
+%plot(ttest_spec(1:30), 'Color',[sig_colour],'LineWidth',1.3);
+ylabel('Pitch (cents)')
+xlabel('Hz')    
+    
+set(get(gca,'xlabel'),'FontSize', 14, 'FontWeight', 'Bold');
+set(get(gca,'ylabel'),'FontSize', 14, 'FontWeight', 'Bold');
+set(get(gca,'title'),'FontSize', 14, 'FontWeight', 'Bold');
+box off; %axis square;
+set(gca,'LineWidth',1.2);
+set(gca,'FontSize',12);
+set(gca,'FontWeight','Bold');
+set(gcf,'color','w');
+set(gcf,'PaperUnits','inches');
+set(gcf,'PaperSize', [8 8]);
+set(gcf,'PaperPosition',[0.5 0.5 7 7]);
+set(gcf,'PaperPositionMode','Manual');
+
+
+subplot(2,1,2)
+axis([0 10 0  30])
+patch([0.1 7 7 0.1], [1 1 25 25], [0.3000    0.3000    0.8000],'EdgeColor', 'none');
+hold on
+plot(mean_pat_meanspec, 'Color',[patient_colour],'LineWidth',1.5);
+plot(mean_HC_meanspec, 'Color',[HC_colour],'LineWidth',1.5);
+grid on
+%plot(ttest_spec(1:7), 'Color',[sig_colour],'LineWidth',1.3);
+%axis off 
+ylabel('Pitch (cents)')
+xlabel('Hz') 
+
+set(get(gca,'xlabel'),'FontSize', 14, 'FontWeight', 'Bold');
+set(get(gca,'ylabel'),'FontSize', 14, 'FontWeight', 'Bold');
+set(get(gca,'title'),'FontSize', 14, 'FontWeight', 'Bold');
+box off; %axis square;
+set(gca,'LineWidth',1.2);
+set(gca,'FontSize',12);
+set(gca,'FontWeight','Bold');
+set(gcf,'color','w');
+set(gcf,'PaperUnits','inches');
+set(gcf,'PaperSize', [8 8]);
+set(gcf,'PaperPosition',[0.5 0.5 7 7]);
+set(gcf,'PaperPositionMode','Manual');
+
+cd /Users/zagnew/Desktop
+
+print(gcf, '-dpdf', '-r150', 'Fig1.pdf');
 
 
